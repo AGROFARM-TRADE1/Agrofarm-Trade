@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="min-h-screen bg-farm-50 p-8"><div className="mx-auto max-w-7xl rounded-3xl bg-white p-10 text-center text-slate-500 shadow-soft">Loading admin control center…</div></main>}

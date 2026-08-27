@@ -1,0 +1,12 @@
+const router=require("express").Router();
+const multer=require("multer");
+const path=require("path");
+const crypto=require("crypto");
+const prisma=require("../db");
+const {auth}=require("../middleware/auth");
+const {getNumber,getSetting}=require("../services/settings");
+const upload=multer({dest:path.join(process.cwd(),"uploads")});
+router.get("/summary",auth,async(req,res)=>{const u=await prisma.user.findUnique({where:{id:req.user.id},select:{walletBalance:true,transactions:{orderBy:{createdAt:"desc"},take:30}}});res.json(u)});
+router.post("/deposit",auth,upload.single("receipt"),async(req,res)=>{const amount=Number(req.body.amount);if(!amount||amount<=0||!req.file)return res.status(400).json({message:"Amount and payment receipt are required"});const t=await prisma.transaction.create({data:{userId:req.user.id,type:"DEPOSIT",status:"PENDING",amount,reference:`DEP-${crypto.randomUUID()}`,receiptUrl:req.file.path,note:`Transfer to ${await getSetting("DEPOSIT_BANK_NAME")} ${await getSetting("DEPOSIT_ACCOUNT_NUMBER")}`}});res.status(201).json({message:"Deposit submitted for admin review",transaction:t})});
+router.post("/withdraw",auth,async(req,res)=>{const amount=Number(req.body.amount);const minWithdrawal=await getNumber("MIN_WITHDRAWAL");const withdrawalFeeRate=await getNumber("WITHDRAWAL_FEE_RATE");if(!Number.isFinite(amount)||amount<minWithdrawal)return res.status(400).json({message:`Minimum withdrawal is ₦${minWithdrawal.toLocaleString()}`});const start=new Date();start.setHours(0,0,0,0);const already=await prisma.transaction.findFirst({where:{userId:req.user.id,type:"WITHDRAWAL",createdAt:{gte:start},status:{in:["PENDING","COMPLETED"]}}});if(already)return res.status(400).json({message:"Only one withdrawal request is allowed per day"});const fee=amount*withdrawalFeeRate;if(Number(req.user.walletBalance)<amount+fee)return res.status(400).json({message:"Insufficient available balance including fee"});const t=await prisma.$transaction(async tx=>{await tx.user.update({where:{id:req.user.id},data:{walletBalance:{decrement:amount+fee}}});return tx.transaction.create({data:{userId:req.user.id,type:"WITHDRAWAL",status:"PENDING",amount,fee,reference:`WD-${crypto.randomUUID()}`}})});res.status(201).json({message:"Withdrawal submitted",transaction:t})});
+module.exports=router;

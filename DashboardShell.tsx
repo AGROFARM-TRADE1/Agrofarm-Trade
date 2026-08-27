@@ -1,0 +1,9 @@
+"use client";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+const nav=[["/dashboard","Home"],["/dashboard/investments","Investments"],["/dashboard/products","Products"],["/dashboard/wallet","Wallet"],["/dashboard/tasks","Tasks"],["/dashboard/referrals","Referrals"],["/dashboard/news","News"],["/dashboard/profile","Profile"],["/dashboard/support","Customer Care"]];
+export default function DashboardShell({children}:{children:React.ReactNode}){
+ const path=usePathname(); const router=useRouter();
+ function logout(){localStorage.removeItem("agf_token");router.push("/login")}
+ return <div className="min-h-screen bg-farm-50"><aside className="fixed hidden h-screen w-64 border-r border-farm-100 bg-white p-5 lg:block"><Link href="/dashboard" className="flex items-center gap-3"><img src="/assets/agrofarm-logo.png" className="h-12 w-12 object-contain" alt="Agrofarm-Trade"/><span className="font-black text-farm-800">AGROFARM</span></Link><nav className="mt-8 space-y-1">{nav.map(([href,label])=><Link key={href} href={href} className={`block rounded-xl px-4 py-3 text-sm font-semibold ${path===href?"bg-farm-100 text-farm-800":"text-slate-500 hover:bg-farm-50"}`}>{label}</Link>)}</nav><button onClick={logout} className="absolute bottom-7 left-5 right-5 rounded-xl border px-4 py-3 text-sm font-bold text-slate-500">Logout</button></aside><main className="lg:ml-64"><header className="sticky top-0 z-30 border-b border-farm-100 bg-white/90 px-5 py-4 backdrop-blur"><div className="mx-auto flex max-w-6xl justify-between"><div><p className="text-xs font-bold uppercase tracking-widest text-gold-600">Agrofarm-Trade</p><h1 className="text-lg font-black text-farm-900">Your dashboard</h1></div><Link href="/dashboard/wallet" className="rounded-xl bg-farm-700 px-4 py-2 text-sm font-bold text-white">Wallet</Link></div></header><div className="mx-auto max-w-6xl p-5 md:p-8">{children}</div></main></div>
+}

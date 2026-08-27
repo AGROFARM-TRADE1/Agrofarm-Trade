@@ -1,0 +1,5 @@
+const prisma=require("../db");
+const DEFAULTS={MIN_WITHDRAWAL:"10000",WITHDRAWAL_FEE_RATE:"0.005",REFERRAL_REWARD:"150",NORMAL_DAILY_RATE:"0.008",VIP_DAILY_RATE:"0.011",PREMIUM_DAILY_RATE:"0.015",VIP_PRICE:"30000",PREMIUM_PRICE:"100000",VIP_DURATION_DAYS:"365",PREMIUM_DURATION_DAYS:"365",PRODUCT_CYCLE_DAYS:"14",LOW_PRODUCT_PROFIT_RATE:"0.25",HIGH_PRODUCT_PROFIT_RATE:"0.35",HIGH_PRODUCT_PRICE_THRESHOLD:"36000",NORMAL_USER_SHARE:"0.70",VIP_USER_SHARE:"0.80",PREMIUM_USER_SHARE:"1.00",DEPOSIT_BANK_NAME:"Moniepoint",DEPOSIT_ACCOUNT_NUMBER:"6841233423"};
+async function getSetting(key){const row=await prisma.platformSetting.findUnique({where:{key}});return row?.value??DEFAULTS[key];}
+async function getNumber(key){return Number(await getSetting(key));}
+module.exports={DEFAULTS,getSetting,getNumber};

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+<rect width="800" height="500" fill="#f2fbf4"/>
+<circle cx="400" cy="230" r="120" fill="#def5e3"/>
+<path d="M250 330c75-100 225-100 300 0" fill="none" stroke="#239447" stroke-width="28" stroke-linecap="round"/>
+<path d="M330 260c40-80 80-80 120 0" fill="none" stroke="#c58a19" stroke-width="20" stroke-linecap="round"/>
+<text x="400" y="420" text-anchor="middle" font-family="Arial" font-size="34" font-weight="700" fill="#0c5b2c">AGROFARM-TRADE</text>
+</svg>

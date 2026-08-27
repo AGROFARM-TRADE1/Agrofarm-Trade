@@ -1,0 +1,1 @@
+Seed admin password is only a development placeholder. Change it immediately and do not use it in production.

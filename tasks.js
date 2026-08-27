@@ -1,0 +1,5 @@
+const router=require("express").Router();const prisma=require("../db");const {auth,admin}=require("../middleware/auth");
+router.get("/",auth,async(req,res)=>{const tasks=await prisma.task.findMany({where:{status:"ACTIVE"},orderBy:{createdAt:"desc"}});res.json(tasks)});
+router.post("/:id/claim",auth,async(req,res)=>{try{const task=await prisma.task.findUnique({where:{id:req.params.id}});if(!task||task.status!=="ACTIVE")throw new Error("Task unavailable");if(task.vipOnly&&req.user.plan==="NORMAL")throw new Error("VIP users only");const c=await prisma.taskClaim.create({data:{taskId:task.id,userId:req.user.id,proofUrl:req.body.proofUrl||null}});res.status(201).json(c)}catch(e){res.status(400).json({message:e.message})}});
+router.post("/",auth,admin,async(req,res)=>res.status(201).json(await prisma.task.create({data:{title:req.body.title,description:req.body.description,type:req.body.type,reward:Number(req.body.reward),minTiktokFollowers:req.body.minTiktokFollowers?Number(req.body.minTiktokFollowers):null,minFacebookFollowers:req.body.minFacebookFollowers?Number(req.body.minFacebookFollowers):null,vipOnly:Boolean(req.body.vipOnly)}})));
+module.exports=router;

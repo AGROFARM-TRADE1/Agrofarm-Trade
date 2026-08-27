@@ -1,0 +1,163 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+enum UserRole { USER ADMIN }
+enum UserStatus { ACTIVE SUSPENDED }
+enum KycStatus { PENDING APPROVED REJECTED }
+enum PlanType { NORMAL VIP PREMIUM }
+enum TransactionType { DEPOSIT WITHDRAWAL INVESTMENT PURCHASE PROFIT REFERRAL TASK REFUND FEE }
+enum TransactionStatus { PENDING APPROVED REJECTED COMPLETED }
+enum InvestmentStatus { ACTIVE COMPLETED CANCELLED }
+enum TaskType { CHECK_IN PROMOTIONAL JOIN_CHANNEL OTHER }
+enum TaskStatus { ACTIVE INACTIVE }
+
+model User {
+  id                 String        @id @default(cuid())
+  userId             String        @unique
+  referralCode       String        @unique
+  referredById       String?
+  referredBy         User?         @relation("Referrals", fields:[referredById], references:[id])
+  referrals          User[]        @relation("Referrals")
+  fullName           String
+  username           String        @unique
+  phone              String
+  email              String        @unique
+  passwordHash       String
+  emailVerified      Boolean       @default(false)
+  role               UserRole      @default(USER)
+  status             UserStatus    @default(ACTIVE)
+  plan               PlanType      @default(NORMAL)
+  planStartedAt      DateTime?
+  planExpiresAt      DateTime?
+  walletBalance      Decimal       @default(0) @db.Decimal(18,2)
+  kycStatus          KycStatus     @default(PENDING)
+  bankName           String?
+  bankAccountNumber  String?
+  bankAccountName    String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  verificationTokens VerificationToken[]
+  documents          Document[]
+  investments        Investment[]
+  transactions       Transaction[]
+  taskClaims         TaskClaim[]
+  supportTickets     SupportTicket[]
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields:[userId], references:[id], onDelete:Cascade)
+  expiresAt DateTime
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields:[userId], references:[id], onDelete:Cascade)
+  type      String
+  fileUrl   String
+  status    KycStatus @default(PENDING)
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id              String       @id @default(cuid())
+  name            String
+  imageUrl        String
+  description     String?
+  price           Decimal      @db.Decimal(18,2)
+  investmentDays  Int          @default(14)
+  expectedReturn  Decimal      @db.Decimal(8,4)
+  stockPercent    Decimal      @default(100) @db.Decimal(8,4)
+  active          Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  investments     Investment[]
+}
+
+model Investment {
+  id              String            @id @default(cuid())
+  userId          String
+  productId       String
+  user             User             @relation(fields:[userId], references:[id], onDelete:Cascade)
+  product         Product           @relation(fields:[productId], references:[id])
+  principal       Decimal           @db.Decimal(18,2)
+  grossProfit     Decimal           @db.Decimal(18,2)
+  userProfit      Decimal           @db.Decimal(18,2)
+  companyShare    Decimal           @db.Decimal(18,2)
+  startAt         DateTime          @default(now())
+  endAt           DateTime
+  status          InvestmentStatus  @default(ACTIVE)
+  createdAt       DateTime          @default(now())
+}
+
+model Transaction {
+  id          String             @id @default(cuid())
+  userId      String
+  user        User              @relation(fields:[userId], references:[id], onDelete:Cascade)
+  type        TransactionType
+  status      TransactionStatus  @default(PENDING)
+  amount      Decimal            @db.Decimal(18,2)
+  fee         Decimal            @default(0) @db.Decimal(18,2)
+  reference   String             @unique
+  note        String?
+  receiptUrl  String?
+  createdAt   DateTime           @default(now())
+  reviewedAt  DateTime?
+}
+
+model Task {
+  id             String     @id @default(cuid())
+  title          String
+  description    String
+  type           TaskType
+  reward         Decimal    @db.Decimal(18,2)
+  minTiktokFollowers Int?
+  minFacebookFollowers Int?
+  vipOnly        Boolean    @default(false)
+  status         TaskStatus @default(ACTIVE)
+  createdAt      DateTime   @default(now())
+  claims         TaskClaim[]
+}
+
+model TaskClaim {
+  id          String       @id @default(cuid())
+  taskId      String
+  userId      String
+  task        Task         @relation(fields:[taskId], references:[id], onDelete:Cascade)
+  user        User         @relation(fields:[userId], references:[id], onDelete:Cascade)
+  status      TransactionStatus @default(PENDING)
+  proofUrl    String?
+  createdAt   DateTime     @default(now())
+  @@unique([taskId,userId])
+}
+
+model News {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  imageUrl  String?
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields:[userId], references:[id], onDelete:Cascade)
+  subject   String
+  message   String
+  status    String   @default("OPEN")
+  response  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PlatformSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
